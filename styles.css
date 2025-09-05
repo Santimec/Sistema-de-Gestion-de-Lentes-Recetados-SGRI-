@@ -193,3 +193,4 @@ body {
 .global-result-item:last-child { border-bottom: 0; }
 .global-result-item:hover { background: var(--surface-2); }
 .badge { display: inline-block; font-size: 12px; padding: 2px 6px; border-radius: 10px; background: #2a3147; color: #cfe0ff; margin-left: 6px; }
+.client-header h3 { margin: 4px 0 6px; font-size: 20px; }
