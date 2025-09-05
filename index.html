@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Óptica Meccico — Precision y calidad</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header" id="top">
+      <div class="container header-inner">
+        <a href="#top" class="brand" aria-label="Óptica Santi">Óptica Meccico</a>
+
+        <button class="nav-toggle" aria-controls="site-nav" aria-expanded="false" aria-label="Abrir menú">
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+        </button>
+
+        <nav id="site-nav" class="site-nav" aria-label="Navegación principal">
+          <ul>
+            <li><a href="#clientes">Inicio</a></li>
+            <li><a href="trabajos.html">Trabajos</a></li>
+            <li><a href="#faq">FAQ</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+
+      <section id="clientes" class="section alt">
+        <div class="container">
+          <h2>Clientes</h2>
+          <p>Registra clientes, busca por nombre o DNI y gestiona sus anteojos.</p>
+
+          <div class="grid clients-forms">
+            <article class="card">
+              <div class="card-body">
+                <h3>Registrar cliente</h3>
+                <form id="form-registrar-cliente" class="form">
+                  <div class="row">
+                    <div class="field">
+                      <label for="cli-nombre">Nombre</label>
+                      <input id="cli-nombre" name="nombre" type="text" required />
+                    </div>
+                    <div class="field">
+                      <label for="cli-apellido">Apellido</label>
+                      <input id="cli-apellido" name="apellido" type="text" required />
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="field">
+                      <label for="cli-dni">DNI</label>
+                      <input id="cli-dni" name="dni" type="text" />
+                    </div>
+                    <div class="field">
+                      <label for="cli-telefono">Teléfono</label>
+                      <input id="cli-telefono" name="telefono" type="tel" />
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="field full">
+                      <label for="cli-email">Email</label>
+                      <input id="cli-email" name="email" type="email" />
+                    </div>
+                  </div>
+                  <button class="btn primary" type="submit">Registrar</button>
+                  <div id="msg-registrar-cliente" class="form-msg"></div>
+                </form>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-body">
+                <h3>Buscar cliente</h3>
+                <form id="form-buscar-cliente" class="form">
+                  <div class="row">
+                    <div class="field full">
+                      <label for="buscar-q">Nombre o DNI</label>
+                      <input id="buscar-q" name="q" type="text" placeholder="Ej: Juan o 12345678" />
+                    </div>
+                  </div>
+                  <button class="btn ghost" type="submit">Buscar</button>
+                </form>
+                <div id="resultados-busqueda" class="search-results"></div>
+              </div>
+            </article>
+          </div>
+
+          <div class="grid cliente-layout">
+            <article class="card">
+              <div class="card-body">
+                <h3>Cliente seleccionado</h3>
+                <div id="cliente-seleccionado" class="cliente-seleccionado muted">No hay cliente seleccionado.</div>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-body">
+                <h3>
+                  Registrar anteojo
+                  <span class="sep">|</span>
+                  <span id="status-cliente" class="error-text">Cliente no seleccionado</span>
+                </h3>
+                <form id="form-registrar-anteojo" class="form" autocomplete="off">
+                  <fieldset class="fieldset">
+                    <legend>Graduación</legend>
+                    <div class="graduacion">
+                      <div class="grad-row">
+                        <span class="eye">OD:</span>
+                        <span class="lbl">esf</span>
+                        <input name="od_esf" type="text" class="line-input" />
+                        <span class="lbl">cil</span>
+                        <input name="od_cil" type="text" class="line-input" />
+                        <span class="lbl">eje</span>
+                        <input name="od_eje" type="text" class="line-input" />
+                      </div>
+                      <div class="grad-row">
+                        <span class="eye">OI:</span>
+                        <span class="lbl">esf</span>
+                        <input name="oi_esf" type="text" class="line-input" />
+                        <span class="lbl">cil</span>
+                        <input name="oi_cil" type="text" class="line-input" />
+                        <span class="lbl">eje</span>
+                        <input name="oi_eje" type="text" class="line-input" />
+                      </div>
+                    </div>
+                  </fieldset>
+
+                  <div class="row">
+                    <div class="field">
+                      <label>Marca del armazón</label>
+                      <input name="marca" type="text" />
+                    </div>
+                    <div class="field">
+                      <label>Material</label>
+                      <select name="material">
+                        <option value="ORG">ORG</option>
+                        <option value="MIN">MIN</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <div class="field">
+                      <label>Laboratorio</label>
+                      <select name="laboratorio">
+                        <option value="OPTICAL CRAFT">OPTICAL CRAFT</option>
+                        <option value="SUR">SUR</option>
+                        <option value="SAGA">SAGA</option>
+                        <option value="TITO">TITO</option>
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label>Precio</label>
+                      <input name="precio" type="number" step="0.01" min="0" />
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <div class="field">
+                      <label>Filtros</label>
+                      <input name="filtros" type="text" placeholder="Antirreflejo, fotocromático..." />
+                    </div>
+                    <div class="field">
+                      <label>Seña</label>
+                      <input name="senia" type="number" step="0.01" min="0" />
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <div class="field full">
+                      <label>Aclaraciones</label>
+                      <textarea name="aclaraciones" rows="2" placeholder="Notas o indicaciones especiales"></textarea>
+                    </div>
+                  </div>
+
+                  <label class="checkbox">
+                    <input name="ranurado" type="checkbox" /> Ranurado
+                  </label>
+
+                  <button class="btn primary" type="submit">Agregar anteojo</button>
+                  <div id="msg-registrar-anteojo" class="form-msg"></div>
+                </form>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-body">
+                <h3>Anteojos del cliente</h3>
+                <div id="lista-anteojos" class="anteojos-lista"></div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="faq" class="section alt">
+        <div class="container">
+          <h2>Preguntas frecuentes</h2>
+          <div class="faq">
+            <details>
+              <summary>¿Necesito receta para comprar lentes?</summary>
+              <p>Recomendamos contar con receta vigente (menos de 12 meses). En tienda podemos realizarte un examen visual.</p>
+            </details>
+            <details>
+              <summary>¿Cuánto tardan en estar listos?</summary>
+              <p>Generalmente entre 24 y 72 horas, según el tipo de cristal y tratamiento.</p>
+            </details>
+            <details>
+              <summary>¿Aceptan seguros o reembolsos?</summary>
+              <p>Sí, emitimos factura y brindamos la documentación necesaria para reembolso.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>
+          <strong>Óptica Santi</strong>
+          <p>Av. Principal 123 — Ciudad</p>
+          <p>Tel: (000) 123-456 — WhatsApp: +00 1234 5678</p>
+        </div>
+        <div>
+          <p>&copy; <span id="year"></span> Óptica Santi. Todos los derechos reservados.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+  </html>

@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Óptica Meccico — Trabajos</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header" id="top">
+      <div class="container header-inner">
+        <a href="index.html#top" class="brand" aria-label="Óptica Santi">Óptica Meccico</a>
+
+        <button class="nav-toggle" aria-controls="site-nav" aria-expanded="false" aria-label="Abrir menú">
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+        </button>
+
+        <nav id="site-nav" class="site-nav" aria-label="Navegación principal">
+          <ul>
+            <li><a href="index.html#clientes">Inicio</a></li>
+            <li><a href="trabajos.html">Trabajos</a></li>
+            <li><a href="index.html#faq">FAQ</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section id="trabajos" class="section alt">
+        <div class="container">
+          <div class="title-row">
+            <h2>Trabajos</h2>
+            <div class="field">
+              <label for="estado">Estado</label>
+              <select id="estado" name="estado">
+                <option value="en-proceso">En proceso</option>
+                <option value="en-laboratorio">En laboratorio</option>
+                <option value="terminados">Terminados</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="labContainer" class="labs-grid">
+            <article class="card lab-card">
+              <div class="card-body">
+                <div class="lab-header">
+                  <h3>SUR</h3>
+                  <label class="checkbox"><input type="checkbox" class="sel-all" data-lab="SUR" /> Seleccionar todos</label>
+                </div>
+                <div class="jobs-list" data-lab="SUR"></div>
+              </div>
+            </article>
+            <article class="card lab-card">
+              <div class="card-body">
+                <div class="lab-header">
+                  <h3>OPTICAL CRAFT</h3>
+                  <label class="checkbox"><input type="checkbox" class="sel-all" data-lab="OPTICAL CRAFT" /> Seleccionar todos</label>
+                </div>
+                <div class="jobs-list" data-lab="OPTICAL CRAFT"></div>
+              </div>
+            </article>
+            <article class="card lab-card">
+              <div class="card-body">
+                <div class="lab-header">
+                  <h3>SAGA</h3>
+                  <label class="checkbox"><input type="checkbox" class="sel-all" data-lab="SAGA" /> Seleccionar todos</label>
+                </div>
+                <div class="jobs-list" data-lab="SAGA"></div>
+              </div>
+            </article>
+            <article class="card lab-card">
+              <div class="card-body">
+                <div class="lab-header">
+                  <h3>TITO</h3>
+                  <label class="checkbox"><input type="checkbox" class="sel-all" data-lab="TITO" /> Seleccionar todos</label>
+                </div>
+                <div class="jobs-list" data-lab="TITO"></div>
+              </div>
+            </article>
+          </div>
+
+          <!-- Vista para Terminados: no por laboratorio -->
+          <div id="doneContainer" class="labs-grid" style="display:none;">
+            <article class="card lab-card">
+              <div class="card-body">
+                <div class="lab-header">
+                  <h3>En espera del Cliente</h3>
+                </div>
+                <div class="row">
+                  <div class="field full">
+                    <label for="search-espera">Buscar</label>
+                    <input id="search-espera" type="text" placeholder="Nombre, apellido, DNI o ID..." autocomplete="off" />
+                  </div>
+                </div>
+                <div class="jobs-done-list" data-status="espera-cliente"></div>
+              </div>
+            </article>
+            <article class="card lab-card">
+              <div class="card-body">
+                <div class="lab-header">
+                  <h3>Entregados</h3>
+                </div>
+                <div class="row">
+                  <div class="field full">
+                    <label for="search-entregados">Buscar</label>
+                    <input id="search-entregados" type="text" placeholder="Nombre, apellido, DNI o ID..." autocomplete="off" />
+                  </div>
+                </div>
+                <div class="jobs-done-list" data-status="entregados"></div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>
+          <strong>Óptica Santi</strong>
+          <p>Av. Principal 123 — Ciudad</p>
+          <p>Tel: (000) 123-456 — WhatsApp: +00 1234 5678</p>
+        </div>
+        <div>
+          <p>&copy; <span id="year"></span> Óptica Santi. Todos los derechos reservados.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <div id="fabWrap" class="fab-wrap">
+      <button id="fabAction" class="btn primary fab" type="button">Enviar a laboratorio</button>
+      <button id="fabMore" class="btn ghost fab-caret" type="button" aria-haspopup="true" aria-expanded="false" title="Más acciones">▾</button>
+    </div>
+    <div id="fabMenu" class="fab-menu" hidden>
+      <button data-act="mod">Modificar</button>
+      <button data-act="print">Imprimir</button>
+      <button data-act="delete">Dar de baja</button>
+    </div>
+    <script>
+      (function trabajosPage() {
+        const selEstado = document.getElementById('estado');
+        const labContainer = document.getElementById('labContainer');
+        const doneContainer = document.getElementById('doneContainer');
+        const lists = Array.from(document.querySelectorAll('.jobs-list'));
+        const doneLists = Array.from(document.querySelectorAll('.jobs-done-list'));
+        const selAlls = Array.from(document.querySelectorAll('.sel-all'));
+        const fab = document.getElementById('fabAction');
+        const fabWrap = document.getElementById('fabWrap');
+        const fabMore = document.getElementById('fabMore');
+        const fabMenu = document.getElementById('fabMenu');
+        const searchEspera = document.getElementById('search-espera');
+        const searchEntregados = document.getElementById('search-entregados');
+        const selected = new Set(); // ids de anteojos seleccionados
+
+        function buildByLab(estado) {
+          const byLab = { 'SUR': [], 'OPTICAL CRAFT': [], 'SAGA': [], 'TITO': [] };
+          try {
+            for (const c of (store?.clientes || [])) {
+              for (const a of (c.anteojos || [])) {
+                const aEstado = a.estado || 'en-proceso';
+                const lab = a.laboratorio || '';
+                if (aEstado === estado && byLab.hasOwnProperty(lab)) {
+                  byLab[lab].push({ a, c });
+                }
+              }
+            }
+          } catch (_) {}
+          return byLab;
+        }
+
+        function buildDone() {
+          const espera = [];
+          const entregados = [];
+          try {
+            for (const c of (store?.clientes || [])) {
+              for (const a of (c.anteojos || [])) {
+                if (a.estado === 'espera-cliente') espera.push({ a, c });
+                else if (a.estado === 'entregados') entregados.push({ a, c });
+              }
+            }
+          } catch (_) {}
+          // Ordenar espera por apellido
+          espera.sort((x, y) => (x.c?.apellido || '').localeCompare(y.c?.apellido || '', 'es', { sensitivity: 'base' }));
+          return { espera, entregados };
+        }
+
+        function filterItems(items, q) {
+          const term = String(q || '').trim().toLowerCase();
+          const digits = term.replace(/\D/g, '');
+          if (!term) return items;
+          return items.filter(({ a, c }) => {
+            const nombre = String(c?.nombre || '').toLowerCase();
+            const apellido = String(c?.apellido || '').toLowerCase();
+            const full = `${nombre} ${apellido}`;
+            const dni = String(c?.dni || '');
+            const dniDigits = dni.replace(/\D/g, '');
+            const cliId = String(c?.codigo || '');
+            const cliIdDigits = cliId.replace(/\D/g, '');
+            const antId = String(a?.codigo || '');
+            const antIdDigits = antId.replace(/\D/g, '');
+
+            return (
+              nombre.includes(term) ||
+              apellido.includes(term) ||
+              full.includes(term) ||
+              dni.toLowerCase().includes(term) ||
+              cliId.toLowerCase().includes(term) ||
+              antId.toLowerCase().includes(term) ||
+              (!!digits && (
+                dniDigits.includes(digits) ||
+                cliIdDigits.includes(digits) ||
+                antIdDigits.includes(digits)
+              ))
+            );
+          });
+        }
+
+        function updateLabHeader(lab, visibleItems) {
+          const headerCb = document.querySelector(`.sel-all[data-lab="${lab}"]`);
+          if (!headerCb) return;
+          const ids = visibleItems.map(({a}) => a.id);
+          const total = ids.length;
+          const selectedCount = ids.reduce((acc, id) => acc + (selected.has(id) ? 1 : 0), 0);
+          headerCb.indeterminate = selectedCount > 0 && selectedCount < total;
+          headerCb.checked = total > 0 && selectedCount === total;
+          headerCb.disabled = total === 0;
+        }
+
+        function render() {
+          const estado = selEstado?.value || 'en-proceso';
+          // Toggle contenedores según etapa
+          const isTerm = estado === 'terminados';
+          if (labContainer) labContainer.style.display = isTerm ? 'none' : '';
+          if (doneContainer) doneContainer.style.display = isTerm ? '' : 'none';
+
+          if (!isTerm) {
+            const byLab = buildByLab(estado);
+            // Render por cada lista (card de laboratorio)
+            lists.forEach(list => {
+              const lab = list.getAttribute('data-lab');
+              const items = byLab[lab] || [];
+              if (!items.length) {
+                list.innerHTML = '<div class="muted">Sin trabajos.</div>';
+                updateLabHeader(lab, items);
+                return;
+              }
+              list.innerHTML = items.map(({a, c}) => {
+                const od_eje = (a.od && (a.od.eje ?? a.od.grado)) || '';
+                const oi_eje = (a.oi && (a.oi.eje ?? a.oi.grado)) || '';
+                const precioStr = (typeof formatPrice === 'function') ? formatPrice(a.precio) : (a.precio || 0);
+                const seniaStr = (typeof formatPrice === 'function') ? formatPrice(a.senia || 0) : (a.senia || 0);
+                const totalStr = (typeof formatPrice === 'function') ? formatPrice((a.precio || 0) - (a.senia || 0)) : ((a.precio || 0) - (a.senia || 0));
+                const checked = selected.has(a.id) ? 'checked' : '';
+                return `
+                  <div class="done-item job-item${checked ? ' selected' : ''}" data-anteojo-id="${a.id}">
+                    <div class="done-top">
+                      <div class="done-title">${c.apellido}, ${c.nombre}<span class="meta"> • ID ${typeof formatId==='function'?formatId(a.codigo):a.codigo} • $${totalStr}</span></div>
+                      <input type="checkbox" class="job-check" data-id="${a.id}" data-lab="${lab}" ${checked} />
+                    </div>
+                    <div class="done-row">OD: esf=${a.od?.esf || '-'}  cil=${a.od?.cil || '-'}  eje=${od_eje || '-'}  |  OI: esf=${a.oi?.esf || '-'}  cil=${a.oi?.cil || '-'}  eje=${oi_eje || '-'}</div>
+                    <div class="done-row">${a.marca || '-'} | ${a.material}${a.ranurado ? ' • Ranurado' : ''} | Filtros: ${a.filtros || '-'} | P: $${precioStr}  S: $${seniaStr}  T: $${totalStr}</div>
+                    ${a.aclaraciones ? `<div class=\"done-row\">Aclaraciones: ${a.aclaraciones}</div>` : ''}
+                  </div>
+                `;
+              }).join('');
+
+              // Wire: cambios en checkboxes individuales
+              list.querySelectorAll('.job-check').forEach(cb => {
+                cb.addEventListener('change', () => {
+                  const id = cb.getAttribute('data-id');
+                  if (cb.checked) selected.add(id); else selected.delete(id);
+                  updateLabHeader(lab, items);
+                  updateFab();
+                  const item = cb.closest('.job-item');
+                  if (item) item.classList.toggle('selected', cb.checked);
+                });
+              });
+
+              // Permitir seleccionar haciendo clic en toda la tarjeta
+              list.querySelectorAll('.job-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                  if (e.target.closest('input,button,a')) return; // evitar si clic directo en elementos interactivos
+                  const id = item.getAttribute('data-anteojo-id');
+                  const cb = item.querySelector('.job-check');
+                  if (!id || !cb) return;
+                  const newState = !cb.checked;
+                  cb.checked = newState;
+                  item.classList.toggle('selected', newState);
+                  if (newState) selected.add(id); else selected.delete(id);
+                  updateLabHeader(lab, items);
+                  updateFab();
+                });
+              });
+
+              updateLabHeader(lab, items);
+            });
+          } else {
+            // Render vista terminados
+            const { espera, entregados } = buildDone();
+            doneLists.forEach(list => {
+              const status = list.getAttribute('data-status');
+              const baseItems = status === 'espera-cliente' ? espera : entregados;
+              const q = status === 'espera-cliente' ? (searchEspera?.value || '') : (searchEntregados?.value || '');
+              const items = filterItems(baseItems, q);
+              if (!items.length) {
+                list.innerHTML = '<div class="muted">Sin trabajos.</div>';
+                return;
+              }
+              list.innerHTML = items.map(({a, c}) => {
+                const od_eje = (a.od && (a.od.eje ?? a.od.grado)) || '';
+                const oi_eje = (a.oi && (a.oi.eje ?? a.oi.grado)) || '';
+                const precioStr = (typeof formatPrice === 'function') ? formatPrice(a.precio) : (a.precio || 0);
+                const seniaStr = (typeof formatPrice === 'function') ? formatPrice(a.senia || 0) : (a.senia || 0);
+                const totalStr = (typeof formatPrice === 'function') ? formatPrice((a.precio || 0) - (a.senia || 0)) : ((a.precio || 0) - (a.senia || 0));
+                const checked = selected.has(a.id) ? 'checked' : '';
+                const withCheckbox = (status === 'espera-cliente');
+                return `
+                  <div class="done-item job-item${checked ? ' selected' : ''}" data-anteojo-id="${a.id}" data-status="${status}">
+                    <div class="done-top">
+                      <div class="done-title">${c.apellido}, ${c.nombre}<span class="meta"> • ID ${typeof formatId==='function'?formatId(a.codigo):a.codigo} • $${totalStr}</span></div>
+                      ${withCheckbox ? `<input type="checkbox" class="job-check" data-id="${a.id}" ${checked} />` : ''}
+                    </div>
+                    <div class="done-row">OD: esf=${a.od?.esf || '-'}  cil=${a.od?.cil || '-'}  eje=${od_eje || '-'}  |  OI: esf=${a.oi?.esf || '-'}  cil=${a.oi?.cil || '-'}  eje=${oi_eje || '-'}</div>
+                    <div class="done-row">${a.marca || '-'} | ${a.material}${a.ranurado ? ' • Ranurado' : ''} | Filtros: ${a.filtros || '-'} | P: $${precioStr}  S: $${seniaStr}  T: $${totalStr}</div>
+                  </div>
+                `;
+              }).join('');
+
+              list.querySelectorAll('.job-check').forEach(cb => {
+                cb.addEventListener('change', () => {
+                  const id = cb.getAttribute('data-id');
+                  if (cb.checked) selected.add(id); else selected.delete(id);
+                  updateFab();
+                  // Reflect selection style
+                  const item = cb.closest('.job-item');
+                  if (item) item.classList.toggle('selected', cb.checked);
+                });
+              });
+
+              // Selección por click en toda la tarjeta (solo espera-cliente)
+              if (status === 'espera-cliente') {
+                list.querySelectorAll('.job-item').forEach(item => {
+                  item.addEventListener('click', (e) => {
+                    if (e.target.closest('input,button,a')) return; // evitar si clic directo en input
+                    const id = item.getAttribute('data-anteojo-id');
+                    const cb = item.querySelector('.job-check');
+                    if (!id || !cb) return;
+                    const newState = !cb.checked;
+                    cb.checked = newState;
+                    item.classList.toggle('selected', newState);
+                    if (newState) selected.add(id); else selected.delete(id);
+                    updateFab();
+                  });
+                });
+              }
+            });
+          }
+          updateFab();
+        }
+
+        function updateFab() {
+          if (!fab) return;
+          const estado = selEstado?.value || 'en-proceso';
+          if (estado === 'en-proceso') {
+            fab.style.display = '';
+            fab.textContent = 'Enviar a laboratorio';
+          } else if (estado === 'en-laboratorio') {
+            fab.style.display = '';
+            fab.textContent = 'Enviar a Terminados';
+          } else if (estado === 'terminados') {
+            fab.style.display = '';
+            fab.textContent = 'Marcar como entregados';
+          } else {
+            fab.style.display = 'none';
+          }
+          // deshabilitar si no hay selección
+          fab.disabled = selected.size === 0;
+
+          // Mostrar/ocultar botón de más acciones y menú
+          const showMore = (selected.size === 1);
+          if (fabWrap) fabWrap.style.display = fab.style.display === 'none' ? 'none' : '';
+          if (fabMore) {
+            fabMore.style.display = showMore ? '' : 'none';
+            fabMore.setAttribute('aria-expanded', 'false');
+          }
+          if (fabMenu) fabMenu.hidden = true;
+        }
+
+        function avanzarSeleccion() {
+          const estado = selEstado?.value || 'en-proceso';
+          let changed = false;
+          if (estado === 'terminados') {
+            // Mover de espera del cliente a entregados
+            for (const c of (store?.clientes || [])) {
+              for (const a of (c.anteojos || [])) {
+                if (selected.has(a.id) && a.estado === 'espera-cliente') {
+                  a.estado = 'entregados';
+                  changed = true;
+                }
+              }
+            }
+          } else {
+            const toEstado = estado === 'en-proceso' ? 'en-laboratorio' : 'espera-cliente';
+            for (const c of (store?.clientes || [])) {
+              for (const a of (c.anteojos || [])) {
+                if (selected.has(a.id) && (a.estado || 'en-proceso') === estado) {
+                  a.estado = toEstado;
+                  changed = true;
+                }
+              }
+            }
+          }
+          if (changed) {
+            saveStore?.();
+          }
+          selected.clear();
+          render();
+        }
+
+        // Seleccionar/deseleccionar todos por laboratorio
+        selAlls.forEach(headerCb => {
+          headerCb.addEventListener('change', () => {
+            const lab = headerCb.getAttribute('data-lab');
+            const estado = selEstado?.value || 'en-proceso';
+            const byLab = buildByLab(estado);
+            const items = byLab[lab] || [];
+            const ids = items.map(({a}) => a.id);
+            if (headerCb.checked) {
+              ids.forEach(id => selected.add(id));
+            } else {
+              ids.forEach(id => selected.delete(id));
+            }
+            render();
+          });
+        });
+
+        if (selEstado) {
+          selEstado.addEventListener('change', () => { selected.clear(); render(); });
+          if (!selEstado.value) selEstado.value = 'en-proceso';
+        }
+        if (searchEspera) searchEspera.addEventListener('input', render);
+        if (searchEntregados) searchEntregados.addEventListener('input', render);
+        if (fab) fab.addEventListener('click', avanzarSeleccion);
+
+        // Fab more menu
+        function closeMenu() { if (fabMenu) fabMenu.hidden = true; if (fabMore) fabMore.setAttribute('aria-expanded','false'); }
+        if (fabMore) fabMore.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (!fabMenu) return;
+          const isHidden = fabMenu.hidden;
+          fabMenu.hidden = !isHidden;
+          fabMore.setAttribute('aria-expanded', String(!isHidden));
+        });
+        document.addEventListener('click', (e) => {
+          if (!fabMenu || fabMenu.hidden) return;
+          if (e.target.closest('#fabMenu') || e.target.closest('#fabMore')) return;
+          closeMenu();
+        });
+
+        function getSingleSelection() {
+          if (selected.size !== 1) return null;
+          for (const id of selected) return id;
+          return null;
+        }
+
+        function findClienteByAnteojoId(id) {
+          for (const c of (store?.clientes || [])) {
+            const a = (c.anteojos || []).find(x => x.id === id);
+            if (a) return { c, a };
+          }
+          return null;
+        }
+
+        function doImprimir(id) {
+          const found = findClienteByAnteojoId(id);
+          if (!found) return alert('No se encontró el anteojo.');
+          window.selectedClientId = found.c.id;
+          try { imprimirAnteojo?.(id); } catch (_) { alert('No se pudo imprimir.'); }
+        }
+
+        function doModificar(id) {
+          const found = findClienteByAnteojoId(id);
+          if (!found) return alert('No se encontró el anteojo.');
+          try {
+            localStorage.setItem('optica_pending_edit', JSON.stringify({ anteojoId: id, clienteId: found.c.id }));
+          } catch (_) {}
+          window.location.href = 'index.html#clientes';
+        }
+
+        function doBorrar(id) {
+          const found = findClienteByAnteojoId(id);
+          if (!found) return alert('No se encontró el anteojo.');
+          if (!confirm('¿Dar de baja este anteojo? Esta acción no se puede deshacer.')) return;
+          const arr = found.c.anteojos || [];
+          const idx = arr.findIndex(x => x.id === id);
+          if (idx >= 0) {
+            arr.splice(idx, 1);
+            try { saveStore?.(); } catch (_) {}
+            selected.delete(id);
+            render();
+          }
+        }
+
+        if (fabMenu) fabMenu.addEventListener('click', (e) => {
+          const btn = e.target.closest('button[data-act]');
+          if (!btn) return;
+          const id = getSingleSelection();
+          if (!id) return;
+          closeMenu();
+          const act = btn.getAttribute('data-act');
+          if (act === 'print') doImprimir(id);
+          else if (act === 'mod') doModificar(id);
+          else if (act === 'delete') doBorrar(id);
+        });
+        render();
+      })();
+    </script>
+  </body>
+  </html>
