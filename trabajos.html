@@ -30,6 +30,15 @@
     <main>
       <section id="trabajos" class="section alt">
         <div class="container">
+          <div class="global-search">
+            <div class="row">
+              <div class="field full">
+                <label for="search-global">Buscar trabajo</label>
+                <input id="search-global" type="text" placeholder="Nombre, apellido, DNI o ID..." autocomplete="off" />
+              </div>
+            </div>
+            <div id="global-results" class="global-results"></div>
+          </div>
           <div class="title-row">
             <h2>Trabajos</h2>
             <div class="field">
@@ -119,12 +128,12 @@
     <footer class="site-footer">
       <div class="container footer-inner">
         <div>
-          <strong>Óptica Santi</strong>
+          <strong>Óptica Meccico</strong>
           <p>Av. Principal 123 — Ciudad</p>
           <p>Tel: (000) 123-456 — WhatsApp: +00 1234 5678</p>
         </div>
         <div>
-          <p>&copy; <span id="year"></span> Óptica Santi. Todos los derechos reservados.</p>
+          <p>&copy; <span id="year"></span> Óptica Meccico. Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>
@@ -153,6 +162,8 @@
         const fabMenu = document.getElementById('fabMenu');
         const searchEspera = document.getElementById('search-espera');
         const searchEntregados = document.getElementById('search-entregados');
+        const searchGlobal = document.getElementById('search-global');
+        const globalResults = document.getElementById('global-results');
         const selected = new Set(); // ids de anteojos seleccionados
 
         function buildByLab(estado) {
@@ -215,6 +226,80 @@
                 antIdDigits.includes(digits)
               ))
             );
+          });
+        }
+
+        // ---------- Global search ----------
+        function buildAllItems() {
+          const list = [];
+          try {
+            for (const c of (store?.clientes || [])) {
+              for (const a of (c.anteojos || [])) {
+                const estado = a.estado || 'en-proceso';
+                list.push({ a, c, estado });
+              }
+            }
+          } catch (_) {}
+          return list;
+        }
+
+        const estadoLabel = (s) => ({
+          'en-proceso': 'En proceso',
+          'en-laboratorio': 'En laboratorio',
+          'espera-cliente': 'En espera del Cliente',
+          'entregados': 'Entregados',
+        })[s] || s;
+
+        function renderGlobalResults(q) {
+          if (!globalResults) return;
+          const items = filterItems(buildAllItems(), q).slice(0, 30);
+          if (!q || !items.length) {
+            globalResults.classList.remove('open');
+            globalResults.innerHTML = '';
+            return;
+          }
+          globalResults.innerHTML = items.map(({a, c, estado}) => {
+            const total = (a.precio || 0) - (a.senia || 0);
+            const totalStr = typeof formatPrice==='function' ? formatPrice(total) : total;
+            const idStr = typeof formatId==='function' ? formatId(a.codigo) : a.codigo;
+            const labStr = (estado === 'en-proceso' || estado === 'en-laboratorio') ? (a.laboratorio || '-') : '';
+            return `
+              <div class="global-result-item" data-id="${a.id}" data-estado="${estado}">
+                <div><strong>${c.apellido}, ${c.nombre}</strong> <span class="badge">${estadoLabel(estado)}</span></div>
+                <div class="anteojo-meta">ID ${idStr}${labStr ? ` • Lab: ${labStr}` : ''} • Total $${totalStr}</div>
+              </div>
+            `;
+          }).join('');
+          globalResults.classList.add('open');
+
+          // Navegar al hacer click
+          globalResults.querySelectorAll('.global-result-item').forEach(el => {
+            el.addEventListener('click', () => {
+              const id = el.getAttribute('data-id');
+              const estado = el.getAttribute('data-estado');
+              if (!id) return;
+              // Cambiar etapa visible
+              if (estado === 'en-proceso' || estado === 'en-laboratorio') {
+                selEstado.value = estado;
+              } else {
+                selEstado.value = 'terminados';
+              }
+              selected.clear();
+              render();
+              // Buscar y resaltar el item
+              setTimeout(() => {
+                const item = document.querySelector(`[data-anteojo-id="${id}"]`);
+                if (item) {
+                  item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  item.classList.add('selected');
+                  setTimeout(() => item.classList.remove('selected'), 1200);
+                }
+              }, 50);
+              // Cerrar resultados
+              globalResults.classList.remove('open');
+              globalResults.innerHTML = '';
+              if (searchGlobal) searchGlobal.value = '';
+            });
           });
         }
 
@@ -372,7 +457,7 @@
             fab.textContent = 'Enviar a Terminados';
           } else if (estado === 'terminados') {
             fab.style.display = '';
-            fab.textContent = 'Marcar como entregados';
+            fab.textContent = 'Marcar como entregado';
           } else {
             fab.style.display = 'none';
           }
@@ -444,7 +529,13 @@
         if (searchEspera) searchEspera.addEventListener('input', render);
         if (searchEntregados) searchEntregados.addEventListener('input', render);
         if (fab) fab.addEventListener('click', avanzarSeleccion);
-
+        if (searchGlobal) searchGlobal.addEventListener('input', () => renderGlobalResults(searchGlobal.value));
+        document.addEventListener('click', (e) => {
+          if (!globalResults) return;
+          if (e.target.closest('#global-results') || e.target.closest('#search-global')) return;
+          globalResults.classList.remove('open');
+        });
+        
         // Fab more menu
         function closeMenu() { if (fabMenu) fabMenu.hidden = true; if (fabMore) fabMore.setAttribute('aria-expanded','false'); }
         if (fabMore) fabMore.addEventListener('click', (e) => {
@@ -477,8 +568,7 @@
         function doImprimir(id) {
           const found = findClienteByAnteojoId(id);
           if (!found) return alert('No se encontró el anteojo.');
-          window.selectedClientId = found.c.id;
-          try { imprimirAnteojo?.(id); } catch (_) { alert('No se pudo imprimir.'); }
+          try { imprimirAnteojo?.(id, found.c.id); } catch (_) { alert('No se pudo imprimir.'); }
         }
 
         function doModificar(id) {

@@ -129,6 +129,35 @@ loadStore();
   saveStore();
 })();
 
+// Utilidad: limpiar toda la "base de datos" (localStorage)
+function clearAllData(confirmFirst = true) {
+  try {
+    if (confirmFirst) {
+      const ok = typeof window !== 'undefined' ? window.confirm('¿Borrar TODOS los datos (clientes y anteojos)? Esta acción no se puede deshacer.') : true;
+      if (!ok) return false;
+    }
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('optica_pending_edit');
+  } catch (_) { /* noop */ }
+  // Reiniciar store en memoria por si no recargamos
+  store.clientes = [];
+  store.nextClienteCodigo = 10000;
+  store.nextAnteojoCodigo = 10000;
+  selectedClientId = null;
+  // Intentar limpiar UI mínima
+  try {
+    if (typeof renderClienteSeleccionado === 'function') renderClienteSeleccionado();
+    const resultados = document.getElementById('resultados-busqueda');
+    if (resultados) resultados.innerHTML = '';
+  } catch (_) { /* noop */ }
+  try { if (typeof saveStore === 'function') saveStore(); } catch (_) {}
+  try { window.location.reload(); } catch (_) {}
+  return true;
+}
+
+// Exponer para uso desde consola
+try { window.limpiarBD = () => clearAllData(true); } catch (_) { /* noop */ }
+
 // Migración: agregar campo de estado a anteojos (en-proceso por defecto)
 (function migrateEstados() {
   let changed = false;
@@ -348,11 +377,20 @@ function listarAnteojos() {
 }
 
 // 5) Imprimir datos (cliente + anteojo)
-function imprimirAnteojo(anteojoId) {
-  const cliente = getClienteById(selectedClientId);
-  if (!cliente) return;
-  const a = cliente.anteojos.find(x => x.id === anteojoId);
-  if (!a) return;
+function imprimirAnteojo(anteojoId, overrideClienteId) {
+  let cliente = overrideClienteId ? getClienteById(overrideClienteId) : getClienteById(selectedClientId);
+  let a = null;
+  if (cliente) {
+    a = cliente.anteojos.find(x => x.id === anteojoId);
+  }
+  // Si no hay cliente seleccionado o no se encontró el anteojo en él, buscar globalmente
+  if (!a) {
+    for (const c of store.clientes) {
+      const found = (c.anteojos || []).find(x => x.id === anteojoId);
+      if (found) { cliente = c; a = found; break; }
+    }
+  }
+  if (!cliente || !a) return alert('No se encontró el anteojo para imprimir.');
   const win = window.open('', '_blank');
   if (!win) return alert('No se pudo abrir la ventana de impresión');
   const d = new Date(a.fecha);
@@ -534,7 +572,7 @@ if (formRegistrarAnteojo) {
   });
 
   // Navegación con Enter en orden de campos
-  const orderNames = ['od_esf','od_cil','od_eje','oi_esf','oi_cil','oi_eje','marca','material','laboratorio','filtros','aclaraciones','precio','senia','ranurado'];
+  const orderNames = ['od_esf','od_cil','od_eje','oi_esf','oi_cil','oi_eje','marca','material','filtros','laboratorio','precio','senia','aclaraciones','ranurado'];
   const orderEls = orderNames.map(name => formRegistrarAnteojo.querySelector(`[name="${name}"]`)).filter(Boolean);
   formRegistrarAnteojo.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' || e.shiftKey) return; // Shift+Enter permite salto de línea
