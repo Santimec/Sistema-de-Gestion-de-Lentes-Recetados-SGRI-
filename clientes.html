@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Óptica Meccico — Clientes</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header" id="top">
+      <div class="container header-inner">
+        <a href="index.html#top" class="brand" aria-label="Óptica Santi">Óptica Meccico</a>
+
+        <button class="nav-toggle" aria-controls="site-nav" aria-expanded="false" aria-label="Abrir menú">
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+        </button>
+
+        <nav id="site-nav" class="site-nav" aria-label="Navegación principal">
+          <ul>
+            <li><a href="index.html#clientes">Inicio</a></li>
+            <li><a href="trabajos.html">Trabajos</a></li>
+            <li><a href="clientes.html">Clientes</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section id="clientes-all" class="section alt">
+        <div class="container">
+          <h2>Buscar clientes</h2>
+          <p class="muted">Filtra por nombre, apellido, DNI o ID. Debajo verás sus lentes apilados.</p>
+
+          <div class="row">
+            <div class="field full">
+              <label for="buscar-clientes-all">Buscar</label>
+              <input id="buscar-clientes-all" type="text" placeholder="Nombre, apellido, DNI o ID..." autocomplete="off" />
+            </div>
+          </div>
+
+          <div id="clients-list" class="grid" style="margin-top: 18px;"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>
+          <strong>Óptica Santi</strong>
+          <p>Av. Principal 123 — Ciudad</p>
+          <p>Tel: (000) 123-456 — WhatsApp: +00 1234 5678</p>
+        </div>
+        <div>
+          <p>&copy; <span id="year"></span> Óptica Santi. Todos los derechos reservados.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+      (function clientesAllPage() {
+        const input = document.getElementById('buscar-clientes-all');
+        const list = document.getElementById('clients-list');
+
+        const $ = (sel, root = document) => root.querySelector(sel);
+
+        function filterClientes(q) {
+          const term = String(q || '').trim().toLowerCase();
+          const digits = term.replace(/\D/g, '');
+          const arr = (store?.clientes || []);
+          if (!term) return arr;
+          return arr.filter(c => {
+            const nombre = String(c?.nombre || '').toLowerCase();
+            const apellido = String(c?.apellido || '').toLowerCase();
+            const full = `${nombre} ${apellido}`;
+            const dni = String(c?.dni || '');
+            const dniDigits = dni.replace(/\D/g, '');
+            const idStr = String(c?.codigo || '');
+            const idDigits = idStr.replace(/\D/g, '');
+            return (
+              nombre.includes(term) ||
+              apellido.includes(term) ||
+              full.includes(term) ||
+              dni.toLowerCase().includes(term) ||
+              idStr.toLowerCase().includes(term) ||
+              (!!digits && (dniDigits.includes(digits) || idDigits.includes(digits)))
+            );
+          });
+        }
+
+        function render() {
+          if (!list) return;
+          const clientes = filterClientes(input?.value || '');
+          if (!clientes.length) {
+            list.innerHTML = '<div class="muted">No se encontraron clientes.</div>';
+            return;
+          }
+          list.innerHTML = clientes.map(c => {
+            const header = `
+              <div class="client-header">
+                <h3>${c.apellido}, ${c.nombre}</h3>
+                <div class="anteojo-meta">ID: ${typeof formatId==='function'?formatId(c.codigo):c.codigo} • DNI: ${c.dni || '-'} • Tel: ${c.telefono || '-'} • Email: ${c.email || '-'}</div>
+              </div>
+            `;
+            const anteojos = (c.anteojos || []);
+            const body = anteojos.length ? anteojos.map(a => {
+              const od_eje = (a.od && (a.od.eje ?? a.od.grado)) || '';
+              const oi_eje = (a.oi && (a.oi.eje ?? a.oi.grado)) || '';
+              const precioStr = (typeof formatPrice === 'function') ? formatPrice(a.precio) : (a.precio || 0);
+              return `
+                <div class="anteojo-item">
+                  <h4>${a.marca || 'Sin marca'} <span class="anteojo-meta">• ID ${typeof formatId==='function'?formatId(a.codigo):a.codigo} • ${a.material}${a.ranurado ? ' • Ranurado' : ''} • $${precioStr}</span></h4>
+                  <div class="anteojo-meta">OD: esf=${a.od?.esf || '-'} cil=${a.od?.cil || '-'} eje=${od_eje || '-'} | OI: esf=${a.oi?.esf || '-'} cil=${a.oi?.cil || '-'} eje=${oi_eje || '-'}</div>
+                  <div class="anteojo-meta">Laboratorio: ${a.laboratorio || '-'} • Filtros: ${a.filtros || '-'}</div>
+                  ${a.aclaraciones ? `<div class="anteojo-meta">Aclaraciones: ${a.aclaraciones}</div>` : ''}
+                  <div class="anteojo-actions">
+                    <button class="btn ghost" data-print-anteojo="${a.id}" data-cliente="${c.id}">Imprimir</button>
+                    <button class="btn secondary" data-edit-anteojo="${a.id}" data-cliente="${c.id}">Modificar</button>
+                    <button class="btn danger" data-delete-anteojo="${a.id}" data-cliente="${c.id}">Eliminar</button>
+                  </div>
+                </div>
+              `;
+            }).join('') : '<div class="muted">Este cliente no tiene anteojos registrados.</div>';
+
+            return `
+              <article class="card" data-cliente-id="${c.id}">
+                <div class="card-body">
+                  ${header}
+                  <div class="anteojos-lista">
+                    ${body}
+                  </div>
+                </div>
+              </article>
+            `;
+          }).join('');
+
+          // Delegación de eventos para imprimir / modificar / eliminar
+          list.querySelectorAll('button[data-print-anteojo]').forEach(btn => btn.addEventListener('click', () => {
+            const aid = btn.getAttribute('data-print-anteojo');
+            const cid = btn.getAttribute('data-cliente');
+            try { imprimirAnteojo?.(aid, cid); } catch (_) { alert('No se pudo imprimir'); }
+          }));
+
+          list.querySelectorAll('button[data-edit-anteojo]').forEach(btn => btn.addEventListener('click', () => {
+            const aid = btn.getAttribute('data-edit-anteojo');
+            const cid = btn.getAttribute('data-cliente');
+            try { localStorage.setItem('optica_pending_edit', JSON.stringify({ anteojoId: aid, clienteId: cid })); } catch (_) {}
+            window.location.href = 'index.html#clientes';
+          }));
+
+          list.querySelectorAll('button[data-delete-anteojo]').forEach(btn => btn.addEventListener('click', () => {
+            const aid = btn.getAttribute('data-delete-anteojo');
+            const cid = btn.getAttribute('data-cliente');
+            const cliente = (store?.clientes || []).find(x => x.id === cid);
+            if (!cliente) return;
+            const idx = (cliente.anteojos || []).findIndex(x => x.id === aid);
+            if (idx < 0) return;
+            const a = cliente.anteojos[idx];
+            const ok = confirm(`¿Eliminar el anteojo ID ${typeof formatId==='function'?formatId(a.codigo):a.codigo} (${a.marca || 'Sin marca'})?`);
+            if (!ok) return;
+            cliente.anteojos.splice(idx, 1);
+            try { saveStore?.(); } catch (_) {}
+            render();
+          }));
+        }
+
+        if (input) input.addEventListener('input', render);
+        render();
+      })();
+    </script>
+  </body>
+  </html>
+
