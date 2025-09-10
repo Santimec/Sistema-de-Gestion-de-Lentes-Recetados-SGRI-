@@ -3,13 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Óptica Meccico — Clientes</title>
+    <title>S.G.A.R — Clientes</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header class="site-header" id="top">
       <div class="container header-inner">
-        <a href="index.html#top" class="brand" aria-label="Óptica Santi">Óptica Meccico</a>
+        <a href="index.html#top" class="brand" aria-label="S.G.A.R (Sistema de gestion de anteojos recetados)">S.G.A.R</a>
 
         <button class="nav-toggle" aria-controls="site-nav" aria-expanded="false" aria-label="Abrir menú">
           <span class="bar"></span>
@@ -22,6 +22,7 @@
             <li><a href="index.html#clientes">Inicio</a></li>
             <li><a href="trabajos.html">Trabajos</a></li>
             <li><a href="clientes.html">Clientes</a></li>
+            
           </ul>
         </nav>
       </div>
@@ -48,12 +49,12 @@
     <footer class="site-footer">
       <div class="container footer-inner">
         <div>
-          <strong>Óptica Santi</strong>
+          <strong>S.G.A.R</strong>
           <p>Av. Principal 123 — Ciudad</p>
           <p>Tel: (000) 123-456 — WhatsApp: +00 1234 5678</p>
         </div>
         <div>
-          <p>&copy; <span id="year"></span> Óptica Santi. Todos los derechos reservados.</p>
+          <p>&copy; <span id="year"></span> S.G.A.R (Sistema de gestion de anteojos recetados). Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>
@@ -90,18 +91,26 @@
           });
         }
 
-        function render() {
-          if (!list) return;
-          const clientes = filterClientes(input?.value || '');
-          if (!clientes.length) {
-            list.innerHTML = '<div class="muted">No se encontraron clientes.</div>';
-            return;
-          }
+          function render() {
+            if (!list) return;
+            const clientes = filterClientes(input?.value || '');
+            if (!clientes.length) {
+              list.innerHTML = '<div class="muted">No se encontraron clientes.</div>';
+              return;
+            }
           list.innerHTML = clientes.map(c => {
             const header = `
               <div class="client-header">
-                <h3>${c.apellido}, ${c.nombre}</h3>
-                <div class="anteojo-meta">ID: ${typeof formatId==='function'?formatId(c.codigo):c.codigo} • DNI: ${c.dni || '-'} • Tel: ${c.telefono || '-'} • Email: ${c.email || '-'}</div>
+                <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                  <div>
+                    <h3>${c.apellido}, ${c.nombre}</h3>
+                    <div class="anteojo-meta">ID: ${typeof formatId==='function'?formatId(c.codigo):c.codigo} • DNI: ${c.dni || '-'} • Tel: ${c.telefono || '-'} • Email: ${c.email || '-'}</div>
+                  </div>
+                  <div class="cliente-actions" style="white-space:nowrap;">
+                    <button class="btn secondary" data-edit-cliente="${c.id}">Modificar</button>
+                    <button class="btn danger" data-delete-cliente="${c.id}">Eliminar</button>
+                  </div>
+                </div>
               </div>
             `;
             const anteojos = (c.anteojos || []);
@@ -124,10 +133,47 @@
               `;
             }).join('') : '<div class="muted">Este cliente no tiene anteojos registrados.</div>';
 
+            const editForm = `
+              <div class="cliente-edit" data-edit-for="${c.id}" hidden>
+                <div class="row">
+                  <div class="field">
+                    <label>Nombre</label>
+                    <input type="text" name="nombre" value="${c.nombre || ''}" />
+                  </div>
+                  <div class="field">
+                    <label>Apellido</label>
+                    <input type="text" name="apellido" value="${c.apellido || ''}" />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="field">
+                    <label>DNI</label>
+                    <input type="text" name="dni" value="${c.dni || ''}" />
+                  </div>
+                  <div class="field">
+                    <label>Teléfono</label>
+                    <input type="tel" name="telefono" value="${c.telefono || ''}" />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="field full">
+                    <label>Email</label>
+                    <input type="email" name="email" value="${c.email || ''}" />
+                  </div>
+                </div>
+                <div class="row" style="gap:8px;">
+                  <button class="btn primary" data-save-cliente="${c.id}">Guardar</button>
+                  <button class="btn ghost" data-cancel-edit="${c.id}">Cancelar</button>
+                </div>
+                <div class="form-msg" data-edit-msg="${c.id}"></div>
+              </div>
+            `;
+
             return `
               <article class="card" data-cliente-id="${c.id}">
                 <div class="card-body">
                   ${header}
+                  ${editForm}
                   <div class="anteojos-lista">
                     ${body}
                   </div>
@@ -164,6 +210,76 @@
             try { saveStore?.(); } catch (_) {}
             render();
           }));
+
+          // -------- Acciones de Cliente: Editar / Guardar / Cancelar / Eliminar --------
+          list.querySelectorAll('button[data-edit-cliente]').forEach(btn => btn.addEventListener('click', () => {
+            const cid = btn.getAttribute('data-edit-cliente');
+            const panel = list.querySelector(`.cliente-edit[data-edit-for="${cid}"]`);
+            if (!panel) return;
+            const hidden = panel.hasAttribute('hidden');
+            if (hidden) panel.removeAttribute('hidden'); else panel.setAttribute('hidden', '');
+            if (!panel.hasAttribute('hidden')) {
+              panel.querySelector('input[name="nombre"]')?.focus();
+            }
+          }));
+
+          list.querySelectorAll('button[data-cancel-edit]').forEach(btn => btn.addEventListener('click', () => {
+            const cid = btn.getAttribute('data-cancel-edit');
+            const panel = list.querySelector(`.cliente-edit[data-edit-for="${cid}"]`);
+            if (panel) panel.setAttribute('hidden', '');
+          }));
+
+          list.querySelectorAll('button[data-save-cliente]').forEach(btn => btn.addEventListener('click', () => {
+            const cid = btn.getAttribute('data-save-cliente');
+            const card = list.querySelector(`article.card[data-cliente-id="${cid}"]`);
+            const panel = list.querySelector(`.cliente-edit[data-edit-for="${cid}"]`);
+            const msg = list.querySelector(`.form-msg[data-edit-msg="${cid}"]`);
+            if (!card || !panel) return;
+            const get = (name) => panel.querySelector(`[name="${name}"]`)?.value ?? '';
+            const nombre = String(get('nombre')).trim();
+            const apellido = String(get('apellido')).trim();
+            const dni = String(get('dni')).trim();
+            const telefonoRaw = String(get('telefono')).trim();
+            const email = String(get('email')).trim();
+            if (msg) msg.textContent = '';
+            try {
+              if (!nombre || !apellido) throw new Error('Completa nombre y apellido.');
+              // DNI único si se completa
+              if (dni) {
+                const dup = (store?.clientes || []).some(x => x.id !== cid && String(x.dni || '').trim() === dni);
+                if (dup) throw new Error('Ya existe un cliente con ese DNI.');
+              }
+              const cliente = (store?.clientes || []).find(x => x.id === cid);
+              if (!cliente) throw new Error('Cliente no encontrado.');
+              cliente.nombre = nombre;
+              cliente.apellido = apellido;
+              cliente.dni = dni;
+              cliente.telefono = typeof normalizeArPhone === 'function' ? normalizeArPhone(telefonoRaw) : telefonoRaw;
+              cliente.email = email;
+              try { saveStore?.(); } catch (_) {}
+              render();
+            } catch (err) {
+              if (msg) msg.textContent = err?.message || String(err);
+            }
+          }));
+
+          list.querySelectorAll('button[data-delete-cliente]').forEach(btn => btn.addEventListener('click', () => {
+            const cid = btn.getAttribute('data-delete-cliente');
+            const cli = (store?.clientes || []).find(x => x.id === cid);
+            if (!cli) return;
+            const cant = (cli.anteojos || []).length;
+            const ok = confirm(`¿Eliminar al cliente ${cli.apellido}, ${cli.nombre}?` + (cant ? `\nTambién se eliminarán ${cant} anteojo(s).` : ''));
+            if (!ok) return;
+            const idx = (store?.clientes || []).findIndex(x => x.id === cid);
+            if (idx >= 0) {
+              store.clientes.splice(idx, 1);
+              try { 
+                if (typeof selectedClientId !== 'undefined' && selectedClientId === cid) { selectedClientId = null; }
+              } catch (_) {}
+              try { saveStore?.(); } catch (_) {}
+              render();
+            }
+          }));
         }
 
         if (input) input.addEventListener('input', render);
@@ -172,4 +288,3 @@
     </script>
   </body>
   </html>
-

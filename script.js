@@ -1,3 +1,74 @@
+// =====================
+// Autenticación básica (front)
+// =====================
+(function authBootstrap() {
+  const AUTH_KEY = 'auth_session_v1';
+
+  function getSession() {
+    try {
+      const raw = localStorage.getItem(AUTH_KEY);
+      if (!raw) return null;
+      const s = JSON.parse(raw);
+      if (!s || !s.exp) return null;
+      if (Date.now() >= Number(s.exp)) return null;
+      return s;
+    } catch (_) { return null; }
+  }
+
+  function isLoggedIn() { return !!getSession(); }
+
+  function clearSession() {
+    try { localStorage.removeItem(AUTH_KEY); } catch (_) {}
+  }
+
+  function enforceAuthIfNeeded() {
+    try {
+      const file = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+      const protectedPages = new Set(['index.html', 'clientes.html', 'trabajos.html']);
+      if (file !== 'login.html' && protectedPages.has(file) && !isLoggedIn()) {
+        const next = encodeURIComponent(location.href);
+        location.replace(`login.html?next=${next}`);
+      }
+    } catch (_) { /* noop */ }
+  }
+
+  function mountAuthNavUI() {
+    try {
+      const ul = document.querySelector('#site-nav ul');
+      if (!ul) return;
+      const existing = document.getElementById('auth-nav-item');
+      if (existing) existing.remove();
+      const li = document.createElement('li');
+      li.id = 'auth-nav-item';
+      if (isLoggedIn()) {
+        const a = document.createElement('a');
+        a.href = '#';
+        a.textContent = 'Cerrar sesión';
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          clearSession();
+          try { location.replace('login.html'); } catch (_) { location.href = 'login.html'; }
+        });
+        li.appendChild(a);
+      } else {
+        const a = document.createElement('a');
+        a.href = 'login.html';
+        a.textContent = 'Ingresar';
+        li.appendChild(a);
+      }
+      ul.appendChild(li);
+    } catch (_) { /* noop */ }
+  }
+
+  // Exponer logout para uso manual
+  try { window.logout = function() { clearSession(); try { location.replace('login.html'); } catch (_) { location.href = 'login.html'; } }; } catch (_) {}
+
+  // Ejecutar cuanto antes (redirección si hace falta)
+  enforceAuthIfNeeded();
+  // Ajustar el nav cuando cargue el DOM
+  try { document.addEventListener('DOMContentLoaded', mountAuthNavUI, { once: true }); } catch (_) {}
+})();
+
 // Mobile menu toggle
 const navToggle = document.querySelector('.nav-toggle');
 const nav = document.querySelector('#site-nav');
@@ -171,6 +242,17 @@ try { window.limpiarBD = () => clearAllData(true); } catch (_) { /* noop */ }
   if (changed) saveStore();
 })();
 
+// Migración: normalizar teléfonos existentes a formato +549 (si corresponde)
+(function migratePhones() {
+  let changed = false;
+  for (const c of (store.clientes || [])) {
+    const prev = c.telefono || '';
+    const norm = normalizeArPhone(prev);
+    if (prev && norm && prev !== norm) { c.telefono = norm; changed = true; }
+  }
+  if (changed) saveStore();
+})();
+
 // Helpers DOM
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -187,6 +269,38 @@ function formatPrice(value) {
     const withDots = ent.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     return `${withDots},${dec}`;
   }
+}
+
+// Normalización de teléfono (Argentina) a formato internacional: +549 + área + número local
+function normalizeArPhone(input) {
+  const raw = String(input || '').trim();
+  if (!raw) return '';
+  let n = raw.replace(/\D+/g, ''); // solo dígitos
+  if (!n) return '';
+
+  // Si viene con código de país, quitarlo (+54) y el 9 si ya está
+  if (n.startsWith('54')) {
+    n = n.slice(2);
+    if (n.startsWith('9')) n = n.slice(1);
+  }
+
+  // Quitar prefijo de larga distancia "0" si viene
+  n = n.replace(/^0+/, '');
+
+  // Muchos escriben móviles como 0AA 15 XXXXXXXX. Quitamos ese 15 tras el código de área (heurística)
+  // Casos comunes: 11 15 XXXXXXXX, 2-4 dígitos de área seguido de 15
+  if (n.length >= 12) {
+    if (n.startsWith('11') && n.slice(2, 4) === '15') {
+      n = n.slice(0, 2) + n.slice(4);
+    } else if (n.length >= 13 && n.slice(3, 5) === '15') {
+      n = n.slice(0, 3) + n.slice(5);
+    } else if (n.length >= 14 && n.slice(4, 6) === '15') {
+      n = n.slice(0, 4) + n.slice(6);
+    }
+  }
+
+  // Armar siempre como +549 + área + local (según pedido)
+  return '+549' + n;
 }
 
 // Formateo de ID/código: 10.000
@@ -259,7 +373,7 @@ function registrarCliente(data) {
     nombre: String(data.nombre).trim(),
     apellido: String(data.apellido).trim(),
     dni,
-    telefono: String(data.telefono || '').trim(),
+    telefono: normalizeArPhone(data.telefono),
     email: String(data.email || '').trim(),
     anteojos: [],
   };

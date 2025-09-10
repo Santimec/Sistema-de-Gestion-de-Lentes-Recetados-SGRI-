@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>S.G.A.R — Iniciar sesión</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header" id="top">
+      <div class="container header-inner">
+        <a href="index.html#top" class="brand" aria-label="S.G.A.R (Sistema de gestion de anteojos recetados)">S.G.A.R</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="section alt">
+        <div class="container" style="max-width: 520px;">
+          <article class="card">
+            <div class="card-body">
+              <h2 style="margin-top:4px;">Iniciar sesión</h2>
+              <p class="muted" style="margin: 6px 0 14px;">Accedé para gestionar clientes y trabajos.</p>
+
+              <form id="login-form" class="form" autocomplete="off">
+                <div class="row">
+                  <div class="field full">
+                    <label for="login-user">Usuario o Email</label>
+                    <input id="login-user" name="user" type="text" required autofocus />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="field full">
+                    <label for="login-pass">Contraseña</label>
+                    <input id="login-pass" name="pass" type="password" required />
+                  </div>
+                </div>
+                <div class="row" style="align-items:center; justify-content: space-between;">
+                  <label class="checkbox"><input id="login-remember" type="checkbox" /> Recordarme</label>
+                  <button class="btn primary" type="submit">Ingresar</button>
+                </div>
+                <div id="login-msg" class="form-msg" aria-live="polite"></div>
+              </form>
+
+              <div class="muted" style="margin-top: 10px; font-size: 13px;">
+               <!-- Consejo: mientras configuramos usuarios reales, probá con <code>admin</code> / <code>admin123</code>.
+                
+                
+                -->
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>
+          <strong>S.G.A.R</strong>
+          <p>Av. Principal 123 — Ciudad</p>
+          <p>Tel: (000) 123-456 — WhatsApp: +00 1234 5678</p>
+        </div>
+        <div>
+          <p>&copy; <span id="year"></span> S.G.A.R (Sistema de gestion de anteojos recetados). Todos los derechos reservados.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+      (function loginPage() {
+        const AUTH_KEY = 'auth_session_v1';
+        const form = document.getElementById('login-form');
+        const userEl = document.getElementById('login-user');
+        const passEl = document.getElementById('login-pass');
+        const rememberEl = document.getElementById('login-remember');
+        const msgEl = document.getElementById('login-msg');
+
+        function setMsg(text, isError = false) {
+          if (!msgEl) return;
+          msgEl.textContent = text || '';
+          msgEl.style.color = isError ? '#ffb3b3' : 'var(--muted)';
+        }
+
+        function now() { return Date.now(); }
+        function isLoggedIn() {
+          try {
+            const raw = localStorage.getItem(AUTH_KEY);
+            if (!raw) return false;
+            const s = JSON.parse(raw);
+            if (!s || !s.exp) return false;
+            return now() < Number(s.exp);
+          } catch (_) { return false; }
+        }
+        function saveSession(user, remember) {
+          const ttl = remember ? 1000 * 60 * 60 * 24 * 30 : 1000 * 60 * 60 * 8; // 30 días o 8 horas
+          const session = {
+            user: { username: user, name: 'Administrador' },
+            exp: now() + ttl,
+            createdAt: now(),
+          };
+          try { localStorage.setItem(AUTH_KEY, JSON.stringify(session)); } catch (_) {}
+        }
+
+        function nextUrl() {
+          try {
+            const params = new URLSearchParams(location.search);
+            const n = params.get('next');
+            if (!n) return 'index.html#clientes';
+            // Permitir solo misma-origen por seguridad
+            const u = new URL(n, location.href);
+            return (u.origin === location.origin) ? u.href : 'index.html#clientes';
+          } catch (_) { return 'index.html#clientes'; }
+        }
+
+        // Si ya está logueado, ir a next
+        if (isLoggedIn()) {
+          try { window.location.replace(nextUrl()); } catch (_) {}
+          return;
+        }
+
+        form?.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const user = String(userEl?.value || '').trim();
+          const pass = String(passEl?.value || '').trim();
+          const remember = !!rememberEl?.checked;
+
+          if (!user || !pass) {
+            setMsg('Completá usuario y contraseña.', true);
+            return;
+          }
+
+          // Placeholder: validación simple hasta integrar backend/usuarios reales
+          const ok = (user.toLowerCase() === 'admin' && pass === 'admin123');
+          if (!ok) {
+            setMsg('Usuario o contraseña incorrectos.', true);
+            return;
+          }
+
+          setMsg('Ingresando...');
+          saveSession(user, remember);
+          try { window.location.replace(nextUrl()); } catch (_) { window.location.href = nextUrl(); }
+        });
+      })();
+    </script>
+  </body>
+  </html>
